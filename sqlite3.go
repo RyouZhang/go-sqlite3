@@ -1784,7 +1784,9 @@ func (c *SQLiteConn) GetFilename(schemaName string) string {
 	if schemaName == "" {
 		schemaName = "main"
 	}
-	return C.GoString(C.sqlite3_db_filename(c.db, C.CString(schemaName)))
+	cSchemaName := C.CString(schemaName)
+	defer C.free(unsafe.Pointer(cSchemaName))
+	return C.GoString(C.sqlite3_db_filename(c.db, cSchemaName))
 }
 
 // GetLimit returns the current value of a run-time limit.
@@ -1839,7 +1841,7 @@ func (s *SQLiteStmt) bind(args []namedValue) error {
 		bindIndices[i][0] = args[i].Ordinal
 		if v.Name != "" {
 			for j := range prefixes {
-				cname := C.CString(prefixes[j] + v.Name)
+				cname := C.CString(prefixes[j] + v.Name)				
 				bindIndices[i][j] = int(C.sqlite3_bind_parameter_index(s.s, cname))
 				C.free(unsafe.Pointer(cname))
 			}
